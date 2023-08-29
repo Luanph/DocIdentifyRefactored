@@ -57,11 +57,39 @@ def extrair_dados_documento(imagem):
     texto_extraido = pytesseract.image_to_string(umbral, config=config, lang="por")
     print(texto_extraido)
 
+    linhas = texto_extraido.split('\n')
+
+# Procurar pela linha que contém o campo "Nome e Sobrenome"
+    linha_procurada = "Nome"
+    #linha_procurada = "2 e 1 NOME E SOBRENOME"
+    data_procurada = "3 DATA, LOCAL E UF DE NASCIMENTO"
+    nome_primeira_habilitacao = None
+    data_nascimento = None
+
+    for linha in linhas:
+        if linha_procurada in linha:
+            print("Entrou")
+        # A próxima linha deve conter o nome desejado
+            indice = linhas.index(linha) + 1
+            nome_primeira_habilitacao = linhas[indice].split('|')
+            break
+
+    for linha in linhas:
+        if data_procurada in linha:
+        # A próxima linha deve conter o nome desejado
+            indice_data = linhas.index(linha) + 1
+            dados = linhas[indice_data].split(",")
+            print("Dados:", dados)
+            data_nascimento = dados[0]
+            print(data_nascimento)
+            break
+
     datas, cpf_cliente, dt_venc = filtrar_data_cpf(texto_extraido)
 
     return {
-        #'nome': nome if (nome is not None and len(nome) > 2) else '',
+        'nome': nome_primeira_habilitacao[0] if (nome_primeira_habilitacao is not None) else '',
+        'primeiraHabilitacao': nome_primeira_habilitacao[1] if (nome_primeira_habilitacao is not None) else '',
         'cpf': cpf_cliente,
-        'nascimento': datas[0] if dt_venc == None else 'Carteira sem Data de Nascimento',
-        'dtVencimentoCnh': datas[1] if dt_venc == None else dt_venc
+        #'nascimento': data_nascimento[0] if data_nascimento == None else 'Carteira sem Data de Nascimento',
+        #'dtVencimentoCnh': datas[1] if dt_venc == None else dt_venc
     }
