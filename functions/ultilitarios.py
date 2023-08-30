@@ -32,7 +32,7 @@ def filtrar_data_cpf(texto):
     cpf_cliente = re.findall(r_cpf, texto)
     
     # Formatar CPF removendo caracteres extras
-    cpf_cliente = ''.join(cpf_cliente).replace(" ", "").replace(".", "").replace("-", "")
+    cpf_cliente = ''.join(cpf_cliente).replace(" ", "")
 
     return datas, cpf_cliente, dt_venc
 
@@ -42,36 +42,43 @@ def extrair_dados_documento(imagem):
 
     # Converter a imagem colorida para escala de cinza
     cinza = cv2.cvtColor(imagem_documento, cv2.COLOR_BGR2GRAY)
-    mostrar_imagem(cinza, titulo='Imagem em Escala de Cinza')
+    #mostrar_imagem(cinza, titulo='Imagem em Escala de Cinza')
 
     # Aplicar limiarização usando o método de Otsu
     limiar = cv2.threshold(cinza, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-    mostrar_imagem(limiar, titulo='Imagem apos Limiarizacao de Otsu')
+    #mostrar_imagem(limiar, titulo='Imagem apos Limiarizacao de Otsu')
 
     # Aplicar limiarização adaptativa usando o método Gaussiano
     umbral = cv2.adaptiveThreshold(limiar, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 55, 25)
-    mostrar_imagem(umbral, titulo='Imagem após Limiarizacao Adaptativa')
+    #mostrar_imagem(umbral, titulo='Imagem após Limiarizacao Adaptativa')
 
     # Realizar OCR na imagem para extrair texto
     config = "--psm 4"
     texto_extraido = pytesseract.image_to_string(umbral, config=config, lang="por")
-    print(texto_extraido)
+    #print(texto_extraido)
 
     linhas = texto_extraido.split('\n')
 
 # Procurar pela linha que contém o campo "Nome e Sobrenome"
-    linha_procurada = "Nome"
-    #linha_procurada = "2 e 1 NOME E SOBRENOME"
+    linha_procurada = "2 e 1 NOME E SOBRENOME"
+    linha_procurada2 = "— NOME"
     data_procurada = "3 DATA, LOCAL E UF DE NASCIMENTO"
     nome_primeira_habilitacao = None
     data_nascimento = None
+    cidade = None
+    estado = None
 
     for linha in linhas:
         if linha_procurada in linha:
-            print("Entrou")
         # A próxima linha deve conter o nome desejado
             indice = linhas.index(linha) + 1
             nome_primeira_habilitacao = linhas[indice].split('|')
+            print(nome_primeira_habilitacao)
+            break
+        elif linha_procurada2 in linha:
+        # A próxima linha deve conter o nome desejado
+            indice = linhas.index(linha) + 1
+            nome_primeira_habilitacao = linhas[indice].split("| E")
             break
 
     for linha in linhas:
@@ -79,17 +86,19 @@ def extrair_dados_documento(imagem):
         # A próxima linha deve conter o nome desejado
             indice_data = linhas.index(linha) + 1
             dados = linhas[indice_data].split(",")
-            print("Dados:", dados)
-            data_nascimento = dados[0]
-            print(data_nascimento)
+            data_nascimento = str(dados[0]).replace("|", "")
+            cidade = str(dados[1]).replace("|", "")
+            estado = str(dados[2]).replace("|", "")
             break
 
     datas, cpf_cliente, dt_venc = filtrar_data_cpf(texto_extraido)
 
     return {
-        'nome': nome_primeira_habilitacao[0] if (nome_primeira_habilitacao is not None) else '',
+        'nome': nome_primeira_habilitacao[0].strip("|") if (nome_primeira_habilitacao is not None) else '',
         'primeiraHabilitacao': nome_primeira_habilitacao[1] if (nome_primeira_habilitacao is not None) else '',
         'cpf': cpf_cliente,
-        #'nascimento': data_nascimento[0] if data_nascimento == None else 'Carteira sem Data de Nascimento',
+        'nascimento': data_nascimento if (data_nascimento is not None) else 'Carteira sem Data de Nascimento',
+        'cidadeNascimento': cidade if (cidade is not None) else 'Cidade não encontrada',
+        'estadoNascimento': estado if (estado is not None) else 'Estado não encontrado',
         #'dtVencimentoCnh': datas[1] if dt_venc == None else dt_venc
     }
