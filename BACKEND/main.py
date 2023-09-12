@@ -7,8 +7,8 @@ def main():
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
     # Caminho da imagem
-    imagem_path = ".//data//images//cnh.jpg"  
-    #imagem_path = ".//data//images//cnh2.jpeg"
+    #imagem_path = ".//BACKEND//data//images//cnh.jpg"  
+    imagem_path = ".//BACKEND//data//images//cnh2.jpeg"
 
     # Chamar a função para processar a imagem do documento
     dados_documento = extrair_dados_documento(imagem_path)

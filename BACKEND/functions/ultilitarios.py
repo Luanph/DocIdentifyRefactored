@@ -11,7 +11,7 @@ def mostrar_imagem(imagem, titulo='Minha Imagem'):
     imagem_redimensionada = cv2.resize(imagem, (largura_desejada, altura_desejada))
 
     # Mostrar a imagem redimensionada em uma janela
-    cv2.imshow(titulo, imagem_redimensionada)
+    #cv2.imshow(titulo, imagem_redimensionada)
 
     # Esperar por uma tecla e depois fechar a janela
     cv2.waitKey(0)
@@ -32,7 +32,7 @@ def filtrar_data_cpf(texto):
     cpf_cliente = re.findall(r_cpf, texto)
     
     # Formatar CPF removendo caracteres extras
-    cpf_cliente = ''.join(cpf_cliente).replace(" ", "")
+    cpf_cliente = ''.join(cpf_cliente)
 
     return datas, cpf_cliente, dt_venc
 
@@ -55,48 +55,75 @@ def extrair_dados_documento(imagem):
     # Realizar OCR na imagem para extrair texto
     config = "--psm 4"
     texto_extraido = pytesseract.image_to_string(umbral, config=config, lang="por")
-    #print(texto_extraido)
 
-    linhas = texto_extraido.split('\n')
+    texto_limpo = str(texto_extraido).replace("|", "")
 
-# Procurar pela linha que contém o campo "Nome e Sobrenome"
-    linha_procurada = "2 e 1 NOME E SOBRENOME"
+    linhas = texto_limpo.split("\n")
+    print(texto_extraido)
+    print(linhas)
+
+    #datas, cpf_cliente, dt_venc = filtrar_data_cpf(texto_extraido)
+
+    #return {
+        #'nome': nome if (nome is not None and len(nome) > 2) else '',
+        #'cpf': cpf_cliente,
+        #'nascimento': datas[0] if dt_venc == None else 'Carteira sem Data de Nascimento',
+        #'dtVencimentoCnh': datas[1] if dt_venc == None else dt_venc
+    #}
+
+    linha_procurada = "2 e 1 NOME E SOBRENOME 1º HABILITAÇÃO"
     linha_procurada2 = "— NOME"
     data_procurada = "3 DATA, LOCAL E UF DE NASCIMENTO"
+    #data_procurada2 = "CPF"
+    doc_identidade = "DOC. IDENTIDADE"
+    documento_identidade = None
     nome_primeira_habilitacao = None
     data_nascimento = None
     cidade = None
     estado = None
 
+    r_data = r"\d{2}\/\d{2}\/\d{4}"
+
     for linha in linhas:
         if linha_procurada in linha:
         # A próxima linha deve conter o nome desejado
             indice = linhas.index(linha) + 1
-            nome_primeira_habilitacao = linhas[indice].split('|')
-            print(nome_primeira_habilitacao)
-            break
+            texto = linhas[indice]
+            partes_texto = texto.split()
+            nome = ' '.join(partes_texto[:-1])
+            data_primeira_hab = re.findall(r_data, texto)
         elif linha_procurada2 in linha:
         # A próxima linha deve conter o nome desejado
             indice = linhas.index(linha) + 1
-            nome_primeira_habilitacao = linhas[indice].split("| E")
-            break
+            nome = linhas[indice].split("| E")
 
-    for linha in linhas:
         if data_procurada in linha:
         # A próxima linha deve conter o nome desejado
             indice_data = linhas.index(linha) + 1
             dados = linhas[indice_data].split(",")
-            data_nascimento = str(dados[0]).replace("|", "")
+            data_nascimento = str(dados[0])#.replace("|", "")
             cidade = str(dados[1]).replace("|", "")
             estado = str(dados[2]).replace("|", "")
-            break
+        elif data_procurada2 in linha:
+        # A próxima linha deve conter o nome desejado
+            indice_data = linhas.index(linha) + 1
+            dados = str(linhas[indice_data].split(" "))
+            data_nascimento = re.findall(r_data, dados)
+            #print(data_nascimento)
 
+        if doc_identidade in linha:
+            indice_doc = linhas.index(linha) + 1
+            dados = linhas[indice_doc].split(" ")
+            documento_identidade = str(dados[0]).replace("[", "")
+
+ 
     datas, cpf_cliente, dt_venc = filtrar_data_cpf(texto_extraido)
 
     return {
-        'nome': nome_primeira_habilitacao[0].strip("|") if (nome_primeira_habilitacao is not None) else '',
-        'primeiraHabilitacao': nome_primeira_habilitacao[1] if (nome_primeira_habilitacao is not None) else '',
+        'nome': nome if (nome is not None) else '',
+        'primeiraHabilitacao': data_primeira_hab if (data_primeira_hab is not None) else '',
         'cpf': cpf_cliente,
+        'identidade': documento_identidade,
         'nascimento': data_nascimento if (data_nascimento is not None) else 'Carteira sem Data de Nascimento',
         'cidadeNascimento': cidade if (cidade is not None) else 'Cidade não encontrada',
         'estadoNascimento': estado if (estado is not None) else 'Estado não encontrado',
