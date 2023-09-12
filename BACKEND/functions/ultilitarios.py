@@ -74,10 +74,10 @@ def extrair_dados_documento(imagem):
     linha_procurada = "2 e 1 NOME E SOBRENOME 1º HABILITAÇÃO"
     linha_procurada2 = "— NOME"
     data_procurada = "3 DATA, LOCAL E UF DE NASCIMENTO"
-    #data_procurada2 = "CPF"
+    data_procurada2 = "" #"CPF"
     doc_identidade = "DOC. IDENTIDADE"
     documento_identidade = None
-    nome_primeira_habilitacao = None
+    nome = None
     data_nascimento = None
     cidade = None
     estado = None
