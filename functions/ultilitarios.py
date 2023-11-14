@@ -58,6 +58,7 @@ def extrair_dados_documento(imagem):
     #print(texto_extraido)
 
     linhas = texto_extraido.split('\n')
+    #coment
 
 # Procurar pela linha que contém o campo "Nome e Sobrenome"
     linha_procurada = "2 e 1 NOME E SOBRENOME"
